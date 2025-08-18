@@ -33,7 +33,7 @@ public class Libro implements Serializable {
         this.titulo = titulo;
         this.autor = autor;
         this.fechaPublicacion = fechaPublicacion;
-        this.disponible = false;
+        this.disponible = true;
     }
 
     @Override

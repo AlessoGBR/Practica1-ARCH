@@ -65,6 +65,7 @@ public class Biblioteca {
     }
 
     private void agregarLibro() {
+        Scanner sc = new Scanner(System.in);
         System.out.println("=================");
         System.out.println("INGRESA EL NOMBRE DEL LIBRO");
         String nombreLibro = sc.nextLine();
@@ -74,6 +75,8 @@ public class Biblioteca {
         int fechaPublicacion = sc.nextInt();
         Libro libro = new Libro(nombreLibro, autor, fechaPublicacion);
         this.libroService.addLibro(libro);
+        System.out.println("LIBRO AGREGADO A LA BIBLIOTECA");
+        menu();
     }
 
     private void prestarLibro() {
@@ -359,6 +362,7 @@ public class Biblioteca {
                 break;
             case "5":
                 System.out.println("=================");
+                this.reportes.reportePrestamosLibros();
                 reportes();
                 break;
             case "6":
