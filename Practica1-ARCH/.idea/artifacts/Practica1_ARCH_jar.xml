@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Practica1-ARCH:jar">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <root id="archive" name="Practica1-ARCH.jar">
+      <element id="module-output" name="Practica1-ARCH" />
+    </root>
+  </artifact>
+</component>
