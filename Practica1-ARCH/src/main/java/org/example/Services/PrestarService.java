@@ -16,12 +16,12 @@ public class PrestarService {
 
     public PrestarService(String filePath) {
         this.prestamos = new ArrayList<>();
-        this.filePath = filePath + File.separator + "prestar.txt";
+        this.filePath = filePath + File.separator + "prestar.gbr";
         File file = new File(filePath);
         if (file.exists()) {
             loadData();
         } else {
-            System.out.println("NO HAY DATOS GUARDADOS");
+            System.out.println("NO HAY PRESTAMOS GUARDADOS");
         }
     }
 
@@ -30,7 +30,7 @@ public class PrestarService {
         saveInFile();
     }
 
-    public void updateprestamos(Prestamo prestamo) {
+    public void updateprestamos() {
         saveInFile();
     }
 
@@ -66,12 +66,12 @@ public class PrestarService {
                     return;
                 }
                 this.prestamos = list;
-                System.out.println("SE CARGARON LOS DATOS CORRECTAMENTE");
+                System.out.println("SE CARGARON LOS PRESTAMOS CORRECTAMENTE");
             } catch (Exception e) {
                 System.out.println("OCURRIO UN ERROR A LA HORA DE CARGAR DATOS: " + e.getMessage());
             }
         } else {
-            System.out.println("EL ARCHIVO DE PERSISTENCIA NO EXISTE");
+            System.out.println("EL ARCHIVO DE PRESTAMOS NO EXISTE");
         }
 
     }

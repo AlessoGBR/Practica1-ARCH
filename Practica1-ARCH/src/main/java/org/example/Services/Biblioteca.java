@@ -8,11 +8,11 @@ import java.util.*;
 
 public class Biblioteca {
 
-    private String path;
+    private final String path;
     private List<Libro> libros;
     private List<Prestamo> prestamos;
-    private String pathArchivo;
-    private Scanner sc = new Scanner(System.in);
+    private final String pathArchivo;
+    private final Scanner sc = new Scanner(System.in);
     LibroService libroService;
     PrestarService prestarService;
     private Reportes reportes;
@@ -20,12 +20,18 @@ public class Biblioteca {
     public Biblioteca(String path, String direccion) {
         this.path = path;
         this.pathArchivo = direccion;
+        inicioPrograma();
+        this.reportes = new Reportes(this.libros, this.prestamos, this.libroService);
+    }
+
+    private void inicioPrograma() {
         this.libroService = new LibroService(pathArchivo);
         libroService.importarDesdeCSV(path);
         this.libros = libroService.getLibros();
         this.prestarService = new PrestarService(pathArchivo);
-        this.prestamos = prestarService.getPrestamos();
-        this.reportes = new Reportes(libros, prestamos, libroService);
+        this.prestamos = this.prestarService.getPrestamos();
+        this.prestamos.addAll(this.libroService.getPrestamos());
+        this.prestarService.updateprestamos();
     }
 
     public void menu() {
@@ -73,6 +79,7 @@ public class Biblioteca {
         String autor = sc.nextLine();
         System.out.println("INGRESA EL FECHA DEL LIBRO");
         int fechaPublicacion = sc.nextInt();
+        // Verificacion de que id no sean iguales a la hora de crear un libro nuevo
         Libro libro = new Libro(nombreLibro, autor, fechaPublicacion);
         this.libroService.addLibro(libro);
         System.out.println("LIBRO AGREGADO A LA BIBLIOTECA");
@@ -88,25 +95,23 @@ public class Biblioteca {
         Libro libroAPrestar;
         switch (opcion) {
             case "1":
-                System.out.println("=================");
-                System.out.println("INGRESA EL ID DEL LIBRO");
-                UUID id = UUID.fromString(sc.nextLine());
-                libroAPrestar = this.libroService.buscarLibroPorId(id);
-                if (libroAPrestar != null) {
-                    if (libroAPrestar.isDisponible()) {
-                        System.out.println("=================");
-                        System.out.println("INGRESA EL NOMBRE DEL USUARIO QUE REGISTRA EL PRESTAMO: ");
-                        String nombreUsuario = sc.nextLine();
-                        libroAPrestar.setDisponible(false);
-                        Prestamo prestamo = new Prestamo(libroAPrestar.getId(), nombreUsuario, "PRESTAMO");
-                        this.prestarService.addprestamos(prestamo);
-                        libroService.updateLibro(libroAPrestar);
-                        System.out.println("LIBRO PRESTADO");
+                try {
+                    System.out.println("=================");
+                    System.out.println("INGRESA EL ID DEL LIBRO");
+                    UUID id = UUID.fromString(sc.nextLine());
+                    libroAPrestar = this.libroService.buscarLibroPorId(id);
+                    if (libroAPrestar != null) {
+                        if (libroAPrestar.isDisponible()) {
+                            prestarLibro(libroAPrestar);
+                            System.out.println("LIBRO PRESTADO");
+                        } else {
+                            System.out.println("LIBRO NO DISPONIBLE");
+                        }
                     } else {
-                        System.out.println("LIBRO NO DISPONIBLE");
+                        System.out.println("NO SE ENCONTRO EL LIBRO");
                     }
-                } else {
-                    System.out.println("NO SE ENCONTRO EL LIBRO");
+                } catch (IllegalArgumentException e) {
+                    System.out.println("INGRESE UN ID VALIDO");
                 }
                 menu();
                 break;
@@ -142,13 +147,7 @@ public class Biblioteca {
                         }
                         Libro libroSeleccionado = libros.get(indice);
                         if (libroSeleccionado.isDisponible()) {
-                            System.out.println("=================");
-                            System.out.println("INGRESA EL NOMBRE DEL USUARIO QUE REGISTRA EL PRESTAMO: ");
-                            String usuario = sc.nextLine();
-                            libroSeleccionado.setDisponible(false);
-                            Prestamo prestamo = new Prestamo(libroSeleccionado.getId(), usuario, "PRESTAMO");
-                            this.prestarService.addprestamos(prestamo);
-                            libroService.updateLibro(libroSeleccionado);
+                            prestarLibro(libroSeleccionado);
                             System.out.println("LIBRO PRESTADO CON ÉXITO: " + libroSeleccionado.getTitulo());
                         } else {
                             System.out.println("LIBRO NO DISPONIBLE");
@@ -159,13 +158,7 @@ public class Biblioteca {
                 } else {
                     Libro libro = libros.get(0);
                     if (libro.isDisponible()) {
-                        System.out.println("=================");
-                        System.out.println("INGRESA EL NOMBRE DEL USUARIO QUE REGISTRA EL PRESTAMO: ");
-                        String usuario = sc.nextLine();
-                        libro.setDisponible(false);
-                        Prestamo prestamo = new Prestamo(libro.getId(), usuario, "PRESTAMO");
-                        this.prestarService.addprestamos(prestamo);
-                        libroService.updateLibro(libro);
+                        prestarLibro(libro);
                         System.out.println("LIBRO PRESTADO CON EXITO: " + libro.getTitulo());
                     } else {
                         System.out.println("LIBRO NO DISPONIBLE");
@@ -178,6 +171,16 @@ public class Biblioteca {
                 break;
         }
 
+    }
+
+    private void prestarLibro(Libro libroAPrestar) {
+        System.out.println("=================");
+        System.out.println("INGRESA EL NOMBRE DEL USUARIO QUE REGISTRA EL PRESTAMO: ");
+        String nombreUsuario = sc.nextLine();
+        libroAPrestar.setDisponible(false);
+        Prestamo prestamo = new Prestamo(libroAPrestar.getId(), nombreUsuario, "PRESTAMO");
+        this.prestarService.addprestamos(prestamo);
+        libroService.updateLibro(libroAPrestar);
     }
 
     private void buscarLibro() {
@@ -210,17 +213,22 @@ public class Biblioteca {
                 }
                 break;
             case 2:
-                System.out.println("INGRESA EL ID DEL LIBRO: ");
-                UUID id = UUID.fromString(sc.nextLine());
-                Libro librosId = libroService.buscarLibroPorId(id);
-                if (librosId != null) {
-                    System.out.println("LIBRO ENCONTRADO: ");
-                    System.out.println(librosId.toString());
-                    menu();
-                } else {
-                    System.out.println("LIBRO NO ENCONTRADO");
-                    menu();
+                try {
+                    System.out.println("INGRESA EL ID DEL LIBRO: ");
+                    UUID id = UUID.fromString(sc.nextLine());
+                    Libro librosId = libroService.buscarLibroPorId(id);
+                    if (librosId != null) {
+                        System.out.println("LIBRO ENCONTRADO: ");
+                        System.out.println(librosId.toString());
+                        menu();
+                    } else {
+                        System.out.println("LIBRO NO ENCONTRADO");
+                        menu();
+                    }
+                } catch (IllegalArgumentException e) {
+                    System.out.println("INGRESE UN ID VALIDO");
                 }
+                menu();
                 break;
             default:
                 System.out.println("OPCION INCORRECTA");
@@ -238,25 +246,30 @@ public class Biblioteca {
         Libro libroAPrestar;
         switch (opcion) {
             case "1":
-                System.out.println("=================");
-                System.out.println("INGRESA EL NOMBRE DEL USUARIO QUE REGISTRA LA DEVOLUCION: ");
-                String nombreUsuario = sc.nextLine();
-                System.out.println("INGRESA EL ID DEL LIBRO");
-                UUID id = UUID.fromString(sc.nextLine());
-                libroAPrestar = this.libroService.buscarLibroPorId(id);
-                if (libroAPrestar != null) {
-                    if (!libroAPrestar.isDisponible()) {
-                        libroAPrestar.setDisponible(true);
-                        Prestamo prestamo = new Prestamo(libroAPrestar.getId(), nombreUsuario, "DEVOLUCION");
-                        this.prestarService.addprestamos(prestamo);
-                        libroService.updateLibro(libroAPrestar);
-                        System.out.println("LIBRO DEVUELTO");
+                try {
+                    System.out.println("=================");
+                    System.out.println("INGRESA EL NOMBRE DEL USUARIO QUE REGISTRA LA DEVOLUCION: ");
+                    String nombreUsuario = sc.nextLine();
+                    System.out.println("INGRESA EL ID DEL LIBRO");
+                    UUID id = UUID.fromString(sc.nextLine());
+                    libroAPrestar = this.libroService.buscarLibroPorId(id);
+                    if (libroAPrestar != null) {
+                        if (!libroAPrestar.isDisponible()) {
+                            libroAPrestar.setDisponible(true);
+                            Prestamo prestamo = new Prestamo(libroAPrestar.getId(), nombreUsuario, "DEVOLUCION");
+                            this.prestarService.addprestamos(prestamo);
+                            libroService.updateLibro(libroAPrestar);
+                            System.out.println("LIBRO DEVUELTO");
+                        } else {
+                            System.out.println("LIBRO NO ESTA PRESTADO");
+                        }
                     } else {
-                        System.out.println("LIBRO NO ESTA PRESTADO");
+                        System.out.println("NO SE ENCONTRO EL LIBRO");
                     }
-                } else {
-                    System.out.println("NO SE ENCONTRO EL LIBRO");
+                } catch (IllegalArgumentException e) {
+                    System.out.println("INGRESE UN ID VALIDO");
                 }
+
                 menu();
                 break;
             case "2":
@@ -290,41 +303,34 @@ public class Biblioteca {
                             break;
                         }
                         Libro libroSeleccionado = libros.get(indice);
-                        if (!libroSeleccionado.isDisponible()) {
-                            System.out.println("=================");
-                            System.out.println("INGRESA EL NOMBRE DEL USUARIO QUE REGISTRA LA DEVOLUCION: ");
-                            String usuario = sc.nextLine();
-                            libroSeleccionado.setDisponible(true);
-                            Prestamo prestamo = new Prestamo(libroSeleccionado.getId(), usuario, "DEVOLUCION");
-                            this.prestarService.addprestamos(prestamo);
-                            libroService.updateLibro(libroSeleccionado);
-                            System.out.println("LIBRO DEVUELTO");
-                        } else {
-                            System.out.println("LIBRO NO ESTA PRESTADO");
-                        }
+                        devolucionLibro(libroSeleccionado);
                     } catch (NumberFormatException e) {
                         System.out.println("DEBES DE INGRESAR UN NUMERO VALIDO");
                     }
                 } else {
                     Libro libro = libros.get(0);
-                    if (!libro.isDisponible()) {
-                        System.out.println("=================");
-                        System.out.println("INGRESA EL NOMBRE DEL USUARIO QUE REGISTRA LA DEVOLUCION: ");
-                        String usuario = sc.nextLine();
-                        libro.setDisponible(true);
-                        Prestamo prestamo = new Prestamo(libro.getId(), usuario, "DEVOLUCION");
-                        this.prestarService.addprestamos(prestamo);
-                        libroService.updateLibro(libro);
-                        System.out.println("LIBRO DEVUELTO");
-                    } else {
-                        System.out.println("LIBRO NO ESTA PRESTADO");
-                    }
+                    devolucionLibro(libro);
                 }
                 menu();
                 break;
             default:
                 System.out.println("OPCION INCORRECTA");
                 break;
+        }
+    }
+
+    private void devolucionLibro(Libro libroSeleccionado) {
+        if (!libroSeleccionado.isDisponible()) {
+            System.out.println("=================");
+            System.out.println("INGRESA EL NOMBRE DEL USUARIO QUE REGISTRA LA DEVOLUCION: ");
+            String usuario = sc.nextLine();
+            libroSeleccionado.setDisponible(true);
+            Prestamo prestamo = new Prestamo(libroSeleccionado.getId(), usuario, "DEVOLUCION");
+            this.prestarService.addprestamos(prestamo);
+            libroService.updateLibro(libroSeleccionado);
+            System.out.println("LIBRO DEVUELTO");
+        } else {
+            System.out.println("LIBRO NO ESTA PRESTADO");
         }
     }
 

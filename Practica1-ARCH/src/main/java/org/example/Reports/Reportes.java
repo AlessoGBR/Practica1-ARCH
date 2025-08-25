@@ -66,7 +66,7 @@ public class Reportes {
         System.out.println("REPORTE PRESTAMOS: ");
         for (int i = 0; i < prestamos.size(); i++) {
             Prestamo prestamo = prestamos.get(i);
-            System.out.printf("%d: %s - USUARIO: %s %s%n",
+            System.out.printf("USUARIO: %d: %s - TIPO: %s %s%n",
                     i + 1,
                     prestamo.getUsuario(),
                     prestamo.getAccion(),
@@ -126,7 +126,7 @@ public class Reportes {
                 }
                 break;
             case 2:
-                System.out.print("INGRESE EL ID DEL LIBRO");
+                System.out.println("INGRESE EL ID DEL LIBRO");
                 String idInput = scanner.nextLine().trim();
                 try {
                     idLibro = UUID.fromString(idInput);

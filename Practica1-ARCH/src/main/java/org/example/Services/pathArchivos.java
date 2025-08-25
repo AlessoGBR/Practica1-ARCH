@@ -23,7 +23,7 @@ public class pathArchivos {
 
             return path;
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("NO SE OBTUVO EL PATH DEL PROGRAMA");
             return ".";
         }
     }
